@@ -135,7 +135,7 @@ class RegressionResult:
     best_model: Pipeline
 
 
-def run_regression(df: pd.DataFrame, max_rows: int = 40_000) -> RegressionResult:
+def run_regression(df: pd.DataFrame, max_rows: int = 10_000) -> RegressionResult:
     d = df[(df["Completed"] == 1)].dropna(subset=["Booking Value", "Ride Distance"])
     if len(d) > max_rows:
         d = d.sample(max_rows, random_state=RANDOM_STATE)
@@ -257,7 +257,7 @@ class ClassificationResult:
     base_rate: float
 
 
-def run_classification(df: pd.DataFrame, max_rows: int = 60_000) -> ClassificationResult:
+def run_classification(df: pd.DataFrame, max_rows: int = 15_000) -> ClassificationResult:
     d = df.copy()
     if len(d) > max_rows:
         d = d.sample(max_rows, random_state=RANDOM_STATE)
