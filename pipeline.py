@@ -135,7 +135,7 @@ class RegressionResult:
     best_model: Pipeline
 
 
-def run_regression(df: pd.DataFrame, max_rows: int = 10_000) -> RegressionResult:
+def run_regression(df: pd.DataFrame, max_rows: int = 5_000) -> RegressionResult:
     d = df[(df["Completed"] == 1)].dropna(subset=["Booking Value", "Ride Distance"])
     if len(d) > max_rows:
         d = d.sample(max_rows, random_state=RANDOM_STATE)
@@ -146,8 +146,8 @@ def run_regression(df: pd.DataFrame, max_rows: int = 10_000) -> RegressionResult
         "Linear Regression": Pipeline([("pre", _preprocessor(REG_NUM, REG_CAT, scale=True)),
                                        ("m", LinearRegression())]),
         "Random Forest": Pipeline([("pre", _preprocessor(REG_NUM, REG_CAT)),
-                                   ("m", RandomForestRegressor(n_estimators=120, max_depth=14, min_samples_leaf=5,
-                                                               n_jobs=-1, random_state=RANDOM_STATE))]),
+                                   ("m", RandomForestRegressor(n_estimators=30, max_depth=8, min_samples_leaf=5,
+                                                               n_jobs=1, random_state=RANDOM_STATE))]),
         "Gradient Boosting": Pipeline([("pre", _preprocessor(REG_NUM, REG_CAT)),
                                        ("m", GradientBoostingRegressor(n_estimators=200, max_depth=3,
                                                                        learning_rate=0.08,
@@ -173,7 +173,7 @@ def _importance(pipe: Pipeline, X, y, n=800) -> pd.DataFrame:
     from sklearn.inspection import permutation_importance
     idx = np.random.default_rng(RANDOM_STATE).choice(len(X), min(n, len(X)), replace=False)
     Xs, ys = X.iloc[idx], y.iloc[idx]
-    r = permutation_importance(pipe, Xs, ys, n_repeats=4, random_state=RANDOM_STATE, n_jobs=-1)
+    r = permutation_importance(pipe, Xs, ys, n_repeats=1, random_state=RANDOM_STATE, n_jobs=-1)
     return (pd.DataFrame({"Feature": X.columns, "Importance": r.importances_mean})
             .sort_values("Importance", ascending=True).reset_index(drop=True))
 
@@ -257,7 +257,7 @@ class ClassificationResult:
     base_rate: float
 
 
-def run_classification(df: pd.DataFrame, max_rows: int = 15_000) -> ClassificationResult:
+def run_classification(df: pd.DataFrame, max_rows: int = 5_000) -> ClassificationResult:
     d = df.copy()
     if len(d) > max_rows:
         d = d.sample(max_rows, random_state=RANDOM_STATE)
@@ -268,8 +268,8 @@ def run_classification(df: pd.DataFrame, max_rows: int = 15_000) -> Classificati
         "Logistic Regression": Pipeline([("pre", _preprocessor(CLF_NUM, CLF_CAT, scale=True)),
                                          ("m", LogisticRegression(max_iter=500, class_weight="balanced"))]),
         "Random Forest": Pipeline([("pre", _preprocessor(CLF_NUM, CLF_CAT)),
-                                   ("m", RandomForestClassifier(n_estimators=150, max_depth=12, min_samples_leaf=10,
-                                                                class_weight="balanced", n_jobs=-1,
+                                   ("m", RandomForestClassifier(n_estimators=30, max_depth=8, min_samples_leaf=10,
+                                                                class_weight="balanced", n_jobs=1,
                                                                 random_state=RANDOM_STATE))]),
     }
     rows, roc, fitted, probs = [], {}, {}, {}
@@ -294,7 +294,7 @@ def run_classification(df: pd.DataFrame, max_rows: int = 15_000) -> Classificati
 def _importance_clf(pipe, X, y, n=1500) -> pd.DataFrame:
     from sklearn.inspection import permutation_importance
     idx = np.random.default_rng(RANDOM_STATE).choice(len(X), min(n, len(X)), replace=False)
-    r = permutation_importance(pipe, X.iloc[idx], y.iloc[idx], n_repeats=4, scoring="roc_auc",
+    r = permutation_importance(pipe, X.iloc[idx], y.iloc[idx], n_repeats=1, scoring="roc_auc",
                                random_state=RANDOM_STATE, n_jobs=-1)
     return (pd.DataFrame({"Feature": X.columns, "Importance": r.importances_mean})
             .sort_values("Importance", ascending=True).reset_index(drop=True))
